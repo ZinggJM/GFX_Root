@@ -31,7 +31,7 @@
   POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "GFX_Root.h"
+#include "GFX.h"
 #include "glcdfont.c"
 #ifdef __AVR__
 #include <avr/pgmspace.h>
@@ -107,7 +107,7 @@ inline uint8_t *pgm_read_bitmap_ptr(const GFXfont *gfxFont) {
    @param    h   Display height, in pixels
 */
 /**************************************************************************/
-GFX_Root::GFX_Root(int16_t w, int16_t h) : WIDTH(w), HEIGHT(h)
+GFX::GFX(int16_t w, int16_t h) : WIDTH(w), HEIGHT(h)
 {
   _width = WIDTH;
   _height = HEIGHT;
@@ -122,36 +122,6 @@ GFX_Root::GFX_Root(int16_t w, int16_t h) : WIDTH(w), HEIGHT(h)
 
 /**************************************************************************/
 /*!
-   @brief    Write a pixel, overwrite in subclasses if startWrite is defined!
-    @param   x   x coordinate
-    @param   y   y coordinate
-   @param    color 16-bit 5-6-5 Color to fill with
-*/
-/**************************************************************************/
-void GFX_Root::writePixel(int16_t x, int16_t y, uint16_t color)
-{
-  drawPixel(x, y, color);
-}
-
-/**************************************************************************/
-/*!
-   @brief    Write a rectangle completely with one color, overwrite in
-   subclasses if startWrite is defined!
-    @param    x   Top left corner x coordinate
-    @param    y   Top left corner y coordinate
-    @param    w   Width in pixels
-    @param    h   Height in pixels
-   @param    color 16-bit 5-6-5 Color to fill with
-*/
-/**************************************************************************/
-void GFX_Root::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
-{
-  // Overwrite in subclasses if desired!
-  fillRect(x, y, w, h, color);
-}
-
-/**************************************************************************/
-/*!
    @brief    Fill a rectangle completely with one color. Update in subclasses if desired!
     @param    x   Top left corner x coordinate
     @param    y   Top left corner y coordinate
@@ -160,17 +130,15 @@ void GFX_Root::writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_
    @param    color 16-bit 5-6-5 Color to fill with
 */
 /**************************************************************************/
-void GFX_Root::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+void GFX::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 {
-  startWrite();
   for (int16_t i = x; i < x + w; i++)
   {
     for (int16_t j = y; j < y + h; j++)
     {
-      writePixel(i, j, color);
+      drawPixel(i, j, color);
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -179,7 +147,7 @@ void GFX_Root::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
     @param    color 16-bit 5-6-5 Color to fill with
 */
 /**************************************************************************/
-void GFX_Root::fillScreen(uint16_t color)
+void GFX::fillScreen(uint16_t color)
 {
   fillRect(0, 0, _width, _height, color);
 }
@@ -194,20 +162,19 @@ void GFX_Root::fillScreen(uint16_t color)
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void GFX_Root::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
+void GFX::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
 {
-  startWrite();
-  if (x0 == x1)
+  if (x0 == x1) 
   {
     if (y0 > y1) _swap_int16_t(y0, y1);
-    writeFillRect(x0, y0, 1, y1 - y0 + 1, color);
-  }
-  else if (y0 == y1)
+    fillRect(x0, y0, 1, y1 - y0 + 1, color);
+  } 
+  else if (y0 == y1) 
   {
     if (x0 > x1) _swap_int16_t(x0, x1);
-    writeFillRect(x0, y0, x1 - x0 + 1, 1, color);
-  }
-  else
+    fillRect(x0, y0, x1 - x0 + 1, 1, color);
+  } 
+  else 
   {
 #if defined(ESP8266)
     yield();
@@ -238,9 +205,9 @@ void GFX_Root::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t
 
     for (; x0 <= x1; x0++) {
       if (steep) {
-        writePixel(y0, x0, color);
+        drawPixel(y0, x0, color);
       } else {
-        writePixel(x0, y0, color);
+        drawPixel(x0, y0, color);
       }
       err -= dy;
       if (err < 0) {
@@ -249,7 +216,6 @@ void GFX_Root::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t
       }
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -261,7 +227,7 @@ void GFX_Root::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void GFX_Root::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
+void GFX::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
 {
 #if defined(ESP8266)
   yield();
@@ -272,11 +238,10 @@ void GFX_Root::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
   int16_t x = 0;
   int16_t y = r;
 
-  startWrite();
-  writePixel(x0, y0 + r, color);
-  writePixel(x0, y0 - r, color);
-  writePixel(x0 + r, y0, color);
-  writePixel(x0 - r, y0, color);
+  drawPixel(x0, y0 + r, color);
+  drawPixel(x0, y0 - r, color);
+  drawPixel(x0 + r, y0, color);
+  drawPixel(x0 - r, y0, color);
 
   while (x < y) {
     if (f >= 0) {
@@ -288,16 +253,15 @@ void GFX_Root::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
     ddF_x += 2;
     f += ddF_x;
 
-    writePixel(x0 + x, y0 + y, color);
-    writePixel(x0 - x, y0 + y, color);
-    writePixel(x0 + x, y0 - y, color);
-    writePixel(x0 - x, y0 - y, color);
-    writePixel(x0 + y, y0 + x, color);
-    writePixel(x0 - y, y0 + x, color);
-    writePixel(x0 + y, y0 - x, color);
-    writePixel(x0 - y, y0 - x, color);
+    drawPixel(x0 + x, y0 + y, color);
+    drawPixel(x0 - x, y0 + y, color);
+    drawPixel(x0 + x, y0 - y, color);
+    drawPixel(x0 - x, y0 - y, color);
+    drawPixel(x0 + y, y0 + x, color);
+    drawPixel(x0 - y, y0 + x, color);
+    drawPixel(x0 + y, y0 - x, color);
+    drawPixel(x0 - y, y0 - x, color);
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -311,7 +275,7 @@ void GFX_Root::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void GFX_Root::drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, uint16_t color)
+void GFX::drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, uint16_t color) 
 {
   int16_t f = 1 - r;
   int16_t ddF_x = 1;
@@ -329,20 +293,20 @@ void GFX_Root::drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t corne
     ddF_x += 2;
     f += ddF_x;
     if (cornername & 0x4) {
-      writePixel(x0 + x, y0 + y, color);
-      writePixel(x0 + y, y0 + x, color);
+      drawPixel(x0 + x, y0 + y, color);
+      drawPixel(x0 + y, y0 + x, color);
     }
     if (cornername & 0x2) {
-      writePixel(x0 + x, y0 - y, color);
-      writePixel(x0 + y, y0 - x, color);
+      drawPixel(x0 + x, y0 - y, color);
+      drawPixel(x0 + y, y0 - x, color);
     }
     if (cornername & 0x8) {
-      writePixel(x0 - y, y0 + x, color);
-      writePixel(x0 - x, y0 + y, color);
+      drawPixel(x0 - y, y0 + x, color);
+      drawPixel(x0 - x, y0 + y, color);
     }
     if (cornername & 0x1) {
-      writePixel(x0 - y, y0 - x, color);
-      writePixel(x0 - x, y0 - y, color);
+      drawPixel(x0 - y, y0 - x, color);
+      drawPixel(x0 - x, y0 - y, color);
     }
   }
 }
@@ -356,12 +320,10 @@ void GFX_Root::drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t corne
     @param    color 16-bit 5-6-5 Color to fill with
 */
 /**************************************************************************/
-void GFX_Root::fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
+void GFX::fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color) 
 {
-  startWrite();
-  writeFillRect(x0, y0 - r, 1, 2 * r + 1, color);
+  fillRect(x0, y0 - r, 1, 2 * r + 1, color);
   fillCircleHelper(x0, y0, r, 3, 0, color);
-  endWrite();
 }
 
 /**************************************************************************/
@@ -375,7 +337,7 @@ void GFX_Root::fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
     @param  color    16-bit 5-6-5 Color to fill with
 */
 /**************************************************************************/
-void GFX_Root::fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t corners, int16_t delta, uint16_t color)
+void GFX::fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t corners, int16_t delta, uint16_t color) 
 {
 
   int16_t f = 1 - r;
@@ -401,15 +363,15 @@ void GFX_Root::fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t corne
     // for the SSD1306 library which has an INVERT drawing mode.
     if (x < (y + 1)) {
       if (corners & 1)
-        writeFillRect(x0 + x, y0 - y, 1, 2 * y + delta, color);
+        fillRect(x0 + x, y0 - y, 1, 2 * y + delta, color);
       if (corners & 2)
-        writeFillRect(x0 - x, y0 - y, 1, 2 * y + delta, color);
+        fillRect(x0 - x, y0 - y, 1, 2 * y + delta, color);
     }
     if (y != py) {
       if (corners & 1)
-        writeFillRect(x0 + py, y0 - px, 1, 2 * px + delta, color);
+        fillRect(x0 + py, y0 - px, 1, 2 * px + delta, color);
       if (corners & 2)
-        writeFillRect(x0 - py, y0 - px, 1, 2 * px + delta, color);
+        fillRect(x0 - py, y0 - px, 1, 2 * px + delta, color);
       py = y;
     }
     px = x;
@@ -426,14 +388,12 @@ void GFX_Root::fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t corne
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void GFX_Root::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+void GFX::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) 
 {
-  startWrite();
-  writeFillRect(x, y, w, 1, color);
-  writeFillRect(x, y + h - 1, w, 1, color);
-  writeFillRect(x, y, 1, h, color);
-  writeFillRect(x + w - 1, y, 1, h, color);
-  endWrite();
+  fillRect(x, y, w, 1, color);
+  fillRect(x, y + h - 1, w, 1, color);
+  fillRect(x, y, 1, h, color);
+  fillRect(x + w - 1, y, 1, h, color);
 }
 
 /**************************************************************************/
@@ -447,22 +407,20 @@ void GFX_Root::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t col
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void GFX_Root::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color)
+void GFX::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color) 
 {
   int16_t max_radius = ((w < h) ? w : h) / 2; // 1/2 minor axis
   if (r > max_radius) r = max_radius;
   // smarter version
-  startWrite();
-  writeFillRect(x + r, y, w - 2 * r, 1, color);         // Top
-  writeFillRect(x + r, y + h - 1, w - 2 * r, 1, color); // Bottom
-  writeFillRect(x, y + r, 1, h - 2 * r, color);         // Left
-  writeFillRect(x + w - 1, y + r, 1, h - 2 * r, color); // Right
+  fillRect(x + r, y, w - 2 * r, 1, color);         // Top
+  fillRect(x + r, y + h - 1, w - 2 * r, 1, color); // Bottom
+  fillRect(x, y + r, 1, h - 2 * r, color);         // Left
+  fillRect(x + w - 1, y + r, 1, h - 2 * r, color); // Right
   // draw four corners
   drawCircleHelper(x + r, y + r, r, 1, color);
   drawCircleHelper(x + w - r - 1, y + r, r, 2, color);
   drawCircleHelper(x + w - r - 1, y + h - r - 1, r, 4, color);
   drawCircleHelper(x + r, y + h - r - 1, r, 8, color);
-  endWrite();
 }
 
 /**************************************************************************/
@@ -476,17 +434,15 @@ void GFX_Root::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t
     @param    color 16-bit 5-6-5 Color to draw/fill with
 */
 /**************************************************************************/
-void GFX_Root::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color)
+void GFX::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color) 
 {
   int16_t max_radius = ((w < h) ? w : h) / 2; // 1/2 minor axis
   if (r > max_radius) r = max_radius;
   // smarter version
-  startWrite();
-  writeFillRect(x + r, y, w - 2 * r, h, color);
+  fillRect(x + r, y, w - 2 * r, h, color);
   // draw four corners
   fillCircleHelper(x + w - r - 1, y + r, r, 1, h - 2 * r - 1, color);
   fillCircleHelper(x + r, y + r, r, 2, h - 2 * r - 1, color);
-  endWrite();
 }
 
 /**************************************************************************/
@@ -501,7 +457,7 @@ void GFX_Root::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void GFX_Root::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color)
+void GFX::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) 
 {
   drawLine(x0, y0, x1, y1, color);
   drawLine(x1, y1, x2, y2, color);
@@ -520,7 +476,7 @@ void GFX_Root::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int1
     @param    color 16-bit 5-6-5 Color to fill/draw with
 */
 /**************************************************************************/
-void GFX_Root::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color)
+void GFX::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color) 
 {
 
   int16_t a, b, y, last;
@@ -539,7 +495,6 @@ void GFX_Root::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int1
     _swap_int16_t(x0, x1);
   }
 
-  startWrite();
   if (y0 == y2) { // Handle awkward all-on-same-line case as its own thing
     a = b = x0;
     if (x1 < a)
@@ -550,8 +505,7 @@ void GFX_Root::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int1
       a = x2;
     else if (x2 > b)
       b = x2;
-    writeFillRect(a, y0, 1, b - a + 1, color);
-    endWrite();
+    fillRect(a, y0, 1, b - a + 1, color);
     return;
   }
 
@@ -581,7 +535,7 @@ void GFX_Root::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int1
     */
     if (a > b)
       _swap_int16_t(a, b);
-    writeFillRect(a, y, b - a + 1, 1, color);
+    fillRect(a, y, b - a + 1, 1, color);
   }
 
   // For lower part of triangle, find scanline crossings for segments
@@ -599,9 +553,8 @@ void GFX_Root::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int1
     */
     if (a > b)
       _swap_int16_t(a, b);
-    writeFillRect(a, y, b - a + 1, 1, color);
+    fillRect(a, y, b - a + 1, 1, color);
   }
-  endWrite();
 }
 
 // BITMAP / XBITMAP / GRAYSCALE / RGB BITMAP FUNCTIONS ---------------------
@@ -618,13 +571,12 @@ void GFX_Root::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int1
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void GFX_Root::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, uint16_t color)
+void GFX::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, uint16_t color) 
 {
 
   int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -632,10 +584,9 @@ void GFX_Root::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t 
       else
         byte = pgm_read_byte(&bitmap[j * byteWidth + i / 8]);
       if (byte & 0x80)
-        writePixel(x + i, y, color);
+        drawPixel(x + i, y, color);
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -652,23 +603,21 @@ void GFX_Root::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t 
     @param    bg 16-bit 5-6-5 Color to draw background with
 */
 /**************************************************************************/
-void GFX_Root::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, uint16_t color, uint16_t bg)
+void GFX::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, uint16_t color, uint16_t bg) 
 {
 
   int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
         byte <<= 1;
       else
         byte = pgm_read_byte(&bitmap[j * byteWidth + i / 8]);
-      writePixel(x + i, y, (byte & 0x80) ? color : bg);
+      drawPixel(x + i, y, (byte & 0x80) ? color : bg);
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -683,13 +632,12 @@ void GFX_Root::drawBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t 
     @param    color 16-bit 5-6-5 Color to draw with
 */
 /**************************************************************************/
-void GFX_Root::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, uint16_t color)
+void GFX::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, uint16_t color) 
 {
 
   int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -697,10 +645,9 @@ void GFX_Root::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int1
       else
         byte = bitmap[j * byteWidth + i / 8];
       if (byte & 0x80)
-        writePixel(x + i, y, color);
+        drawPixel(x + i, y, color);
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -717,23 +664,21 @@ void GFX_Root::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int1
     @param    bg 16-bit 5-6-5 Color to draw background with
 */
 /**************************************************************************/
-void GFX_Root::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg)
+void GFX::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h, uint16_t color, uint16_t bg) 
 {
 
   int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
         byte <<= 1;
       else
         byte = bitmap[j * byteWidth + i / 8];
-      writePixel(x + i, y, (byte & 0x80) ? color : bg);
+      drawPixel(x + i, y, (byte & 0x80) ? color : bg);
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -751,13 +696,12 @@ void GFX_Root::drawBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int1
     @param    color 16-bit 5-6-5 Color to draw pixels with
 */
 /**************************************************************************/
-void GFX_Root::drawXBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, uint16_t color)
+void GFX::drawXBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h, uint16_t color) 
 {
 
   int16_t byteWidth = (w + 7) / 8; // Bitmap scanline pad = whole byte
   uint8_t byte = 0;
 
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -767,10 +711,9 @@ void GFX_Root::drawXBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t
       // Nearly identical to drawBitmap(), only the bit order
       // is reversed here (left-to-right = LSB to MSB):
       if (byte & 0x01)
-        writePixel(x + i, y, color);
+        drawPixel(x + i, y, color);
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -785,15 +728,13 @@ void GFX_Root::drawXBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t
     @param    h   Height of bitmap in pixels
 */
 /**************************************************************************/
-void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h)
+void GFX::drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h) 
 {
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
-      writePixel(x + i, y, (uint8_t)pgm_read_byte(&bitmap[j * w + i]));
+      drawPixel(x + i, y, (uint8_t)pgm_read_byte(&bitmap[j * w + i]));
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -808,15 +749,13 @@ void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
     @param    h   Height of bitmap in pixels
 */
 /**************************************************************************/
-void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h)
+void GFX::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_t w, int16_t h) 
 {
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
-      writePixel(x + i, y, bitmap[j * w + i]);
+      drawPixel(x + i, y, bitmap[j * w + i]);
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -834,11 +773,10 @@ void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap, int16_
     @param    h   Height of bitmap in pixels
 */
 /**************************************************************************/
-void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[], const uint8_t mask[], int16_t w, int16_t h)
+void GFX::drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[], const uint8_t mask[], int16_t w, int16_t h) 
 {
   int16_t bw = (w + 7) / 8; // Bitmask scanline pad = whole byte
   uint8_t byte = 0;
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -846,11 +784,10 @@ void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
       else
         byte = pgm_read_byte(&mask[j * bw + i / 8]);
       if (byte & 0x80) {
-        writePixel(x + i, y, (uint8_t)pgm_read_byte(&bitmap[j * w + i]));
+        drawPixel(x + i, y, (uint8_t)pgm_read_byte(&bitmap[j * w + i]));
       }
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -868,11 +805,10 @@ void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[],
     @param    h   Height of bitmap in pixels
 */
 /**************************************************************************/
-void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap, uint8_t *mask, int16_t w, int16_t h)
+void GFX::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap, uint8_t *mask, int16_t w, int16_t h) 
 {
   int16_t bw = (w + 7) / 8; // Bitmask scanline pad = whole byte
   uint8_t byte = 0;
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -880,11 +816,10 @@ void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap, uint8_
       else
         byte = mask[j * bw + i / 8];
       if (byte & 0x80) {
-        writePixel(x + i, y, bitmap[j * w + i]);
+        drawPixel(x + i, y, bitmap[j * w + i]);
       }
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -898,15 +833,13 @@ void GFX_Root::drawGrayscaleBitmap(int16_t x, int16_t y, uint8_t *bitmap, uint8_
     @param    h   Height of bitmap in pixels
 */
 /**************************************************************************/
-void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w, int16_t h)
+void GFX::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w, int16_t h) 
 {
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
-      writePixel(x + i, y, pgm_read_word(&bitmap[j * w + i]));
+      drawPixel(x + i, y, pgm_read_word(&bitmap[j * w + i]));
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -920,15 +853,13 @@ void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int1
     @param    h   Height of bitmap in pixels
 */
 /**************************************************************************/
-void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, int16_t w, int16_t h)
+void GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, int16_t w, int16_t h) 
 {
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
-      writePixel(x + i, y, bitmap[j * w + i]);
+      drawPixel(x + i, y, bitmap[j * w + i]);
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -945,11 +876,10 @@ void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, int16_t w, 
     @param    h   Height of bitmap in pixels
 */
 /**************************************************************************/
-void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], int16_t w, int16_t h)
+void GFX::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], const uint8_t mask[], int16_t w, int16_t h) 
 {
   int16_t bw = (w + 7) / 8; // Bitmask scanline pad = whole byte
   uint8_t byte = 0;
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -957,11 +887,10 @@ void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], cons
       else
         byte = pgm_read_byte(&mask[j * bw + i / 8]);
       if (byte & 0x80) {
-        writePixel(x + i, y, pgm_read_word(&bitmap[j * w + i]));
+        drawPixel(x + i, y, pgm_read_word(&bitmap[j * w + i]));
       }
     }
   }
-  endWrite();
 }
 
 /**************************************************************************/
@@ -978,11 +907,10 @@ void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], cons
     @param    h   Height of bitmap in pixels
 */
 /**************************************************************************/
-void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h)
+void GFX::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, uint8_t *mask, int16_t w, int16_t h) 
 {
   int16_t bw = (w + 7) / 8; // Bitmask scanline pad = whole byte
   uint8_t byte = 0;
-  startWrite();
   for (int16_t j = 0; j < h; j++, y++) {
     for (int16_t i = 0; i < w; i++) {
       if (i & 7)
@@ -990,11 +918,10 @@ void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, uint8_t *ma
       else
         byte = mask[j * bw + i / 8];
       if (byte & 0x80) {
-        writePixel(x + i, y, bitmap[j * w + i]);
+        drawPixel(x + i, y, bitmap[j * w + i]);
       }
     }
   }
-  endWrite();
 }
 
 // TEXT- AND CHARACTER-HANDLING FUNCTIONS ----------------------------------
@@ -1012,7 +939,7 @@ void GFX_Root::drawRGBBitmap(int16_t x, int16_t y, uint16_t *bitmap, uint8_t *ma
     @param    size  Font magnification level, 1 is 'original' size
 */
 /**************************************************************************/
-void GFX_Root::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size)
+void GFX::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size) 
 {
   drawChar(x, y, c, color, bg, size, size);
 }
@@ -1031,7 +958,7 @@ void GFX_Root::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, u
     @param    size_y  Font magnification level in Y-axis, 1 is 'original' size
 */
 /**************************************************************************/
-void GFX_Root::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y)
+void GFX::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size_x, uint8_t size_y) 
 {
 
   if (!gfxFont) { // 'Classic' built-in font
@@ -1045,31 +972,29 @@ void GFX_Root::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, u
     if (!_cp437 && (c >= 176))
       c++; // Handle 'classic' charset behavior
 
-    startWrite();
     for (int8_t i = 0; i < 5; i++) { // Char bitmap = 5 columns
       uint8_t line = pgm_read_byte(&font[c * 5 + i]);
       for (int8_t j = 0; j < 8; j++, line >>= 1) {
         if (line & 1) {
           if (size_x == 1 && size_y == 1)
-            writePixel(x + i, y + j, color);
+            drawPixel(x + i, y + j, color);
           else
-            writeFillRect(x + i * size_x, y + j * size_y, size_x, size_y,
+            fillRect(x + i * size_x, y + j * size_y, size_x, size_y,
                           color);
         } else if (bg != color) {
           if (size_x == 1 && size_y == 1)
-            writePixel(x + i, y + j, bg);
+            drawPixel(x + i, y + j, bg);
           else
-            writeFillRect(x + i * size_x, y + j * size_y, size_x, size_y, bg);
+            fillRect(x + i * size_x, y + j * size_y, size_x, size_y, bg);
         }
       }
     }
     if (bg != color) { // If opaque, draw vertical line for last column
       if (size_x == 1 && size_y == 1)
-        writeFillRect(x + 5, y, 8, 1, bg);
+        fillRect(x + 5, y, 8, 1, bg);
       else
-        writeFillRect(x + 5 * size_x, y, size_x, 8 * size_y, bg);
+        fillRect(x + 5 * size_x, y, size_x, 8 * size_y, bg);
     }
-  endWrite();
 
   } else { // Custom font
 
@@ -1103,7 +1028,7 @@ void GFX_Root::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, u
     // proportionally-spaced fonts with glyphs of varying sizes (and that
     // may overlap).  To replace previously-drawn text when using a custom
     // font, use the getTextBounds() function to determine the smallest
-    // rectangle encompassing a string, erase the area with filllRect(),
+    // rectangle encompassing a string, erase the area with fillRect(),
     // then draw new text.  This WILL infortunately 'blink' the text, but
     // is unavoidable.  Drawing 'background' pixels will NOT fix this,
     // only creates a new set of problems.  Have an idea to work around
@@ -1111,7 +1036,6 @@ void GFX_Root::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, u
     // displays supporting setAddrWindow() and pushColors()), but haven't
     // implemented this yet.
 
-    startWrite();
     for (yy = 0; yy < h; yy++) {
       for (xx = 0; xx < w; xx++) {
         if (!(bit++ & 7)) {
@@ -1119,16 +1043,15 @@ void GFX_Root::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, u
         }
         if (bits & 0x80) {
           if (size_x == 1 && size_y == 1) {
-            writePixel(x + xo + xx, y + yo + yy, color);
+            drawPixel(x + xo + xx, y + yo + yy, color);
           } else {
-            writeFillRect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y,
+            fillRect(x + (xo16 + xx) * size_x, y + (yo16 + yy) * size_y,
                           size_x, size_y, color);
           }
         }
         bits <<= 1;
       }
     }
-  endWrite();
 
   } // End classic vs custom font
 }
@@ -1138,7 +1061,7 @@ void GFX_Root::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, u
     @param  c  The 8-bit ascii character to write
 */
 /**************************************************************************/
-size_t GFX_Root::write(uint8_t c)
+size_t GFX::write(uint8_t c) 
 {
   if (!gfxFont) { // 'Classic' built-in font
 
@@ -1192,7 +1115,7 @@ size_t GFX_Root::write(uint8_t c)
     @param  s  Desired text size. 1 is default 6x8, 2 is 12x16, 3 is 18x24, etc
 */
 /**************************************************************************/
-void GFX_Root::setTextSize(uint8_t s)
+void GFX::setTextSize(uint8_t s) 
 {
   setTextSize(s, s);
 }
@@ -1205,7 +1128,7 @@ void GFX_Root::setTextSize(uint8_t s)
     @param  s_y  Desired text width magnification level in Y-axis. 1 is default
 */
 /**************************************************************************/
-void GFX_Root::setTextSize(uint8_t s_x, uint8_t s_y)
+void GFX::setTextSize(uint8_t s_x, uint8_t s_y) 
 {
   textsize_x = (s_x > 0) ? s_x : 1;
   textsize_y = (s_y > 0) ? s_y : 1;
@@ -1217,10 +1140,10 @@ void GFX_Root::setTextSize(uint8_t s_x, uint8_t s_y)
     @param  x   0 thru 3 corresponding to 4 cardinal rotations
 */
 /**************************************************************************/
-void GFX_Root::setRotation(uint8_t x)
+void GFX::setRotation(uint8_t x) 
 {
   rotation = (x & 3);
-  switch (rotation)
+  switch (rotation) 
   {
     case 0:
     case 2:
@@ -1241,7 +1164,7 @@ void GFX_Root::setRotation(uint8_t x)
     @param  f  The GFXfont object, if NULL use built in 6x8 font
 */
 /**************************************************************************/
-void GFX_Root::setFont(const GFXfont * f)
+void GFX::setFont(const GFXfont * f) 
 {
   if (f) {          // Font struct pointer passed in?
     if (!gfxFont) { // And no current font struct?
@@ -1271,7 +1194,7 @@ void GFX_Root::setFont(const GFXfont * f)
     @param    maxy  Maximum clipping value for Y
 */
 /**************************************************************************/
-void GFX_Root::charBounds(unsigned char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *miny, int16_t *maxx, int16_t *maxy)
+void GFX::charBounds(unsigned char c, int16_t *x, int16_t *y, int16_t *minx, int16_t *miny, int16_t *maxx, int16_t *maxy) 
 {
 
   if (gfxFont) {
@@ -1347,7 +1270,7 @@ void GFX_Root::charBounds(unsigned char c, int16_t *x, int16_t *y, int16_t *minx
     @param    h      The boundary height, set by function
 */
 /**************************************************************************/
-void GFX_Root::getTextBounds(const char *str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h)
+void GFX::getTextBounds(const char *str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) 
 {
   uint8_t c; // Current character
 
@@ -1383,9 +1306,9 @@ void GFX_Root::getTextBounds(const char *str, int16_t x, int16_t y, int16_t *x1,
     @param    h      The boundary height, set by function
 */
 /**************************************************************************/
-void GFX_Root::getTextBounds(const String & str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h)
+void GFX::getTextBounds(const String & str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) 
 {
-  if (str.length() != 0)
+  if (str.length() != 0) 
   {
     getTextBounds(const_cast<char *>(str.c_str()), x, y, x1, y1, w, h);
   }
@@ -1404,7 +1327,7 @@ void GFX_Root::getTextBounds(const String & str, int16_t x, int16_t y, int16_t *
     @param    h      The boundary height, set by function
 */
 /**************************************************************************/
-void GFX_Root::getTextBounds(const __FlashStringHelper * str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h)
+void GFX::getTextBounds(const __FlashStringHelper * str, int16_t x, int16_t y, int16_t *x1, int16_t *y1, uint16_t *w, uint16_t *h) 
 {
   uint8_t *s = (uint8_t *)str, c;
 
@@ -1433,7 +1356,7 @@ void GFX_Root::getTextBounds(const __FlashStringHelper * str, int16_t x, int16_t
     @param   i  True if you want to invert, false to make 'normal'
 */
 /**************************************************************************/
-void GFX_Root::invertDisplay(bool i)
+void GFX::invertDisplay(bool i) 
 {
   // Do nothing, must be subclassed if supported by hardware
 }

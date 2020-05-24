@@ -1,15 +1,15 @@
-#ifndef _GFX_Root_H_
-#define _GFX_Root_H_
+#ifndef _GFX_H_
+#define _GFX_H_
 
 #include "Arduino.h"
 #include "Print.h"
 #include "gfxfont.h"
 
-class GFX_Root : public Print
+class GFX : public Print
 {
 
   public:
-    GFX_Root(int16_t w, int16_t h); // Constructor
+    GFX(int16_t w, int16_t h); // Constructor
 
     /**********************************************************************/
     /*!
@@ -22,19 +22,6 @@ class GFX_Root : public Print
     /**********************************************************************/
     virtual void drawPixel(int16_t x, int16_t y, uint16_t color) = 0;
 
-    // TRANSACTION API / CORE DRAW API
-    // These MAY be overridden by the subclass to provide device-specific
-    // optimized code.  Otherwise 'generic' versions are used.
-  protected:
-    // Only the bare minimum needed to enable transaction API extension.
-    // These are needed for use inside transactions by the root class.
-    virtual void writePixel(int16_t x, int16_t y, uint16_t color);
-    virtual void writeFillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
-    // These are needed to be able to have transactions with Add-Ons to GFX_Root, e.g. Buttons
-    virtual void startWrite(void) {};
-    virtual void endWrite(void) {};
-  public:
-
     // CONTROL API
     // These MAY be overridden by the subclass to provide device-specific
     // optimized code.  Otherwise 'generic' versions are used.
@@ -46,7 +33,7 @@ class GFX_Root : public Print
     // optimized code.  Otherwise 'generic' versions are used.
     virtual void fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
 
-    // These exist only with GFX_Root (no subclass overrides)
+    // These exist only with GFX (no subclass overrides)
     void fillScreen(uint16_t color);
     void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color);
     void drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color);
@@ -87,7 +74,7 @@ class GFX_Root : public Print
       @param  y    Y coordinate in pixels
     */
     /**********************************************************************/
-    void setCursor(int16_t x, int16_t y)
+    void setCursor(int16_t x, int16_t y) 
     {
       cursor_x = x;
       cursor_y = y;
@@ -101,7 +88,7 @@ class GFX_Root : public Print
                are set to same color rather than using a separate flag.
     */
     /**********************************************************************/
-    void setTextColor(uint16_t c)
+    void setTextColor(uint16_t c) 
     {
       textcolor = textbgcolor = c;
     }
@@ -113,7 +100,7 @@ class GFX_Root : public Print
       @param   bg  16-bit 5-6-5 Color to draw background/fill with
     */
     /**********************************************************************/
-    void setTextColor(uint16_t c, uint16_t bg)
+    void setTextColor(uint16_t c, uint16_t bg) 
     {
       textcolor = c;
       textbgcolor = bg;
@@ -126,7 +113,7 @@ class GFX_Root : public Print
       @param  w  true for wrapping, false for clipping
     */
     /**********************************************************************/
-    void setTextWrap(bool w)
+    void setTextWrap(bool w) 
     {
       wrap = w;
     }
@@ -145,7 +132,7 @@ class GFX_Root : public Print
       @param  x  true = enable (new behavior), false = disable (old behavior)
     */
     /**********************************************************************/
-    void cp437(bool x = true)
+    void cp437(bool x = true) 
     {
       _cp437 = x;
     }
@@ -159,7 +146,7 @@ class GFX_Root : public Print
       @returns    Width in pixels
     */
     /************************************************************************/
-    int16_t width(void) const
+    int16_t width(void) const 
     {
       return _width;
     };
@@ -170,7 +157,7 @@ class GFX_Root : public Print
       @returns    Height in pixels
     */
     /************************************************************************/
-    int16_t height(void) const
+    int16_t height(void) const 
     {
       return _height;
     }
@@ -181,7 +168,7 @@ class GFX_Root : public Print
       @returns    0 thru 3 corresponding to 4 cardinal rotations
     */
     /************************************************************************/
-    uint8_t getRotation(void) const
+    uint8_t getRotation(void) const 
     {
       return rotation;
     }
@@ -194,7 +181,7 @@ class GFX_Root : public Print
       @returns    X coordinate in pixels
     */
     /************************************************************************/
-    int16_t getCursorX(void) const
+    int16_t getCursorX(void) const 
     {
       return cursor_x;
     }
@@ -205,7 +192,7 @@ class GFX_Root : public Print
       @returns    Y coordinate in pixels
     */
     /************************************************************************/
-    int16_t getCursorY(void) const
+    int16_t getCursorY(void) const 
     {
       return cursor_y;
     };
@@ -229,4 +216,4 @@ class GFX_Root : public Print
     GFXfont *gfxFont;     ///< Pointer to special font
 };
 
-#endif // _GFX_Root_H
+#endif // _GFX_H
